@@ -17,7 +17,7 @@ public class Console {
     }
 
     private final Scanner scanner = new Scanner(System.in);
-    private final String template= "^(\\d{1,2}|\\w{1,4})\\s+(\\+?|\\*?|-?|/?)\\s+(\\d{1,2}|\\w{1,4})$";
+    private final String template= "^(\\w{1,4})\\s+(\\+?|\\*?|-?|/?)\\s+(\\w{1,4})$";
     private int firstNumber;
     private int secondNumber;
     private boolean exit;
@@ -28,6 +28,7 @@ public class Console {
 
     public void listenToInput() throws CalculatorException {
         System.out.println("exit push Q");
+        System.out.print("Input: ");
         String string = scanner.nextLine().trim();
         if (checkOut(string)) toFinishWork(null);
         if (!checkInput(string)) toFinishWork("wrong input");
@@ -97,6 +98,7 @@ public class Console {
         if (error != null){
             throw new CalculatorException(error);
         }
+        System.out.println("Exit");
         System.exit(0);
     }
 }
