@@ -3,102 +3,102 @@ import java.util.regex.Pattern;
 
 public class Console {
 
-    private enum NUM{
-        ONE(1,"I"), TWO(2, "II"), THREE(3, "III"), FOUR(4,"IV"), FIVE(5, "V"),
-        SIX(6, "VI"), SEVEN(7, "VII"), EIGHT(8, "VIII"), NINE(9, "IX"), TEN(10, "X");
-
-        private int number;
-        private String romanNumber;
-
-        NUM(int number, String romanNumber) {
-            this.number = number;
-            this.romanNumber = romanNumber;
-        }
-    }
+    private static final String PATTERN_SPACE = "\\s+";
+    private static final String INPUT_TEMPLATE = "^(\\w{1,4})\\s+(\\+?|\\*?|-?|/?)\\s+(\\w{1,4})$";
+    private static final String EXIT_PUSH_Q = "exit push Q";
+    private static final String INPUT = "Input: ";
+    private static final String OUTPUT_NUMBERS = "Output: %d\n";
+    private static final String OUTPUT_ROMAN_NUMBERS = "Output: %s\n";
+    private static final String Q = "Q";
+    private static final String EXIT = "Exit";
+    private static final int COMPLETION_OF_WORK = 0;
+    private static final int MINIMUM_NUMBER = 1;
+    private static final int MAXIMUM_NUMBER = 10;
+    private static final int NOT_NUMBER = -1;
 
     private final Scanner scanner = new Scanner(System.in);
-    private final String template= "^(\\w{1,4})\\s+(\\+?|\\*?|-?|/?)\\s+(\\w{1,4})$";
+    private final Calculator calculator = new Calculator();
+    private final RomanNumerals romanNumerals = new RomanNumerals();
     private int firstNumber;
     private int secondNumber;
-    private boolean exit;
 
-    public boolean isExit() {
-        return !exit;
-    }
-
-    public void listenToInput() throws CalculatorException {
-        System.out.println("exit push Q");
-        System.out.print("Input: ");
+    public void listenToInput() throws ConsoleException {
+        boolean isArabicNumber = true;
+        System.out.println(EXIT_PUSH_Q);
+        System.out.print(INPUT);
         String string = scanner.nextLine().trim();
         if (checkOut(string)) toFinishWork(null);
-        if (!checkInput(string)) toFinishWork("wrong input");
+        if (!checkInput(string)) toFinishWork(ConsoleException.ERROR_WRONG_INPUT);
         String[] strings = split(string);
         firstNumber = checkNumber(strings[0]);      ;
         secondNumber = checkNumber(strings[2]);
-        if (firstNumber == -1 && secondNumber == -1) {
+        if (firstNumber == NOT_NUMBER && secondNumber == NOT_NUMBER) {
             firstNumber = determineNumber(strings[0]);
             secondNumber = determineNumber(strings[2]);
-        } else if (firstNumber < 0 || secondNumber < 0) toFinishWork(String.format("different number format: %s and %s", strings[0], strings[2]));
-        performAction(strings[1]);
+            isArabicNumber = false;
+        } else if (firstNumber < 0 || secondNumber < 0) toFinishWork(String.format(ConsoleException.ERROR_DIFFERENT_NUMBER_FORMAT, strings[0], strings[2]));
+        performAction(strings[1], isArabicNumber);
     }
 
     private boolean checkOut(String string){
-        return string.equals("q") || string.equals("Q");
+        return string.toUpperCase().equals(Q);
     }
 
-    private void performAction(String string) throws CalculatorException {
-        Calculator calculator = new Calculator();
+    private void performAction(String string, boolean isArabicNumber) throws ConsoleException {
+        int result = 0;
         switch (string){
-            case "+":
-                calculator.add(firstNumber, secondNumber);
+            case Calculator.PLUS:
+                result = calculator.add(firstNumber, secondNumber);
                 break;
-            case "-":
-                calculator.deduct(firstNumber, secondNumber);
+            case Calculator.MINUS:
+                result = calculator.deduct(firstNumber, secondNumber);
                 break;
-            case "*":
-                calculator.multiply(firstNumber, secondNumber);
+            case Calculator.MULTIPLICATION:
+                result = calculator.multiply(firstNumber, secondNumber);
                 break;
-            case "/":
-                calculator.toDivide(firstNumber, secondNumber);
+            case Calculator.DIVISION:
+                result = calculator.toDivide(firstNumber, secondNumber);
                 break;
             default:
-                toFinishWork(String.format("unknown action: %s", string));
+                toFinishWork(String.format(ConsoleException.ERROR_UNKNOWN_ACTION, string));
         }
+        if (isArabicNumber) System.out.printf(OUTPUT_NUMBERS, result);
+        else System.out.printf(OUTPUT_ROMAN_NUMBERS, romanNumerals.determineRomanNumber(result));
     }
 
-    private int checkNumber(String string) throws CalculatorException {
+    private int checkNumber(String string) throws ConsoleException {
         int num;
         try {
             num = Integer.parseInt(string);
-            if (num < 1 || num > 10) toFinishWork(String.format("%d - out of range", num));;
+            if (num < MINIMUM_NUMBER || num > MAXIMUM_NUMBER) toFinishWork(String.format(ConsoleException.ERROR_OUT_OF_RANGE, num));;
         }catch (NumberFormatException e){
-            return -1;
+            return NOT_NUMBER;
         }
         return num;
     }
 
-    private int determineNumber(String string) throws CalculatorException {
-        for (int i = 0; i < NUM.values().length; i++) {
-            if (string.equals(NUM.values()[i].romanNumber)) return NUM.values()[i].number;
+    private int determineNumber(String string) throws ConsoleException {
+        for (int i = 0; i < Num.values().length; i++) {
+            if (string.equals(Num.values()[i].getRomanNumber()) && Num.values()[i].getNumber() <= MAXIMUM_NUMBER) return Num.values()[i].getNumber();
         }
-        toFinishWork(String.format("incorrect input: %s", string));
+        toFinishWork(String.format(ConsoleException.ERROR_INCORRECT_INPUT, string));
         return 0;
     }
 
     private String[] split(String string){
-        return string.split("\\s+");
+        return string.split(PATTERN_SPACE);
     }
 
     private boolean checkInput(String string){
-        return Pattern.matches(template, string);
+        return Pattern.matches(INPUT_TEMPLATE, string);
     }
 
-    private void toFinishWork(String error) throws CalculatorException {
+    private void toFinishWork(String error) throws ConsoleException {
         scanner.close();
         if (error != null){
-            throw new CalculatorException(error);
+            throw new ConsoleException(error);
         }
-        System.out.println("Exit");
-        System.exit(0);
+        System.out.println(EXIT);
+        System.exit(COMPLETION_OF_WORK);
     }
 }

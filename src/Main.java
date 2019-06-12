@@ -3,13 +3,13 @@ public class Main {
 
     public static void main(String[] args) {
         Console console = new Console();
-        do{
+        while (true){
             try {
                 console.listenToInput();
-            } catch (CalculatorException e) {
+            } catch (ConsoleException e) {
                 e.printStackTrace();
-                System.exit(-888);
+                System.exit(ConsoleException.STATUS_ERR);
             }
-        }while (console.isExit());
+        }
     }
 }
